@@ -1,4 +1,4 @@
-# Payment Exception Resolution Agent
+# TxResolve — Payment Exception Resolution Agent
 
 A production-grade multi-agent system for diagnosing, routing, and resolving failed payment transactions end-to-end.
 

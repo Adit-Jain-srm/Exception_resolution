@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from .agents.orchestrator import Orchestrator, ResolutionOutcome
 from .models.enums import ExceptionType, PaymentRail
 
-app = FastAPI(title="Payment Exception Resolution Agent", version="0.1.0")
+app = FastAPI(title="TxResolve — Payment Exception Resolution Agent", version="0.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 orchestrator = Orchestrator()
