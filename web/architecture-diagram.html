@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TxResolve — Architecture Diagram</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a0f; font-family: 'Inter', -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 20px; }
+.diagram { width: 100%; max-width: 1100px; }
+svg { width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="diagram">
+<svg viewBox="0 0 1100 780" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gIngress" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient>
+    <linearGradient id="gOrch" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#6366f1"/></linearGradient>
+    <linearGradient id="gInvest" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#f97316"/></linearGradient>
+    <linearGradient id="gDecision" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#ec4899"/></linearGradient>
+    <linearGradient id="gEgress" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="#10b981"/></linearGradient>
+    <linearGradient id="gGuard" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ef4444"/><stop offset="100%" stop-color="#f97316"/></linearGradient>
+    <linearGradient id="gFeedback" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e"/></marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="780" fill="#0a0a0f" rx="16"/>
+
+  <!-- Title -->
+  <text x="550" y="36" text-anchor="middle" fill="#fafafa" font-size="20" font-weight="700" font-family="Inter, sans-serif">TxResolve — System Architecture</text>
+  <text x="550" y="58" text-anchor="middle" fill="#71717a" font-size="12" font-family="Inter, sans-serif">Production-Grade Multi-Agent Payment Exception Resolution</text>
+
+  <!-- External Sources (left) -->
+  <rect x="20" y="200" width="140" height="160" rx="8" fill="#18181b" stroke="#27272a" stroke-width="1"/>
+  <text x="90" y="225" text-anchor="middle" fill="#a1a1aa" font-size="10" font-weight="600" font-family="Inter, sans-serif">PAYMENT RAILS</text>
+  <text x="90" y="252" text-anchor="middle" fill="#71717a" font-size="10" font-family="Inter, sans-serif">SWIFT</text>
+  <text x="90" y="270" text-anchor="middle" fill="#71717a" font-size="10" font-family="Inter, sans-serif">NEFT / ACH</text>
+  <text x="90" y="288" text-anchor="middle" fill="#71717a" font-size="10" font-family="Inter, sans-serif">UPI</text>
+  <text x="90" y="306" text-anchor="middle" fill="#71717a" font-size="10" font-family="Inter, sans-serif">SEPA</text>
+  <text x="90" y="332" text-anchor="middle" fill="#71717a" font-size="10" font-family="Inter, sans-serif">Manual Triggers</text>
+  <text x="90" y="350" text-anchor="middle" fill="#71717a" font-size="10" font-family="Inter, sans-serif">Monitoring Alerts</text>
+
+  <!-- Main System Boundary -->
+  <rect x="195" y="85" width="710" height="620" rx="12" fill="none" stroke="#27272a" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <text x="550" y="105" text-anchor="middle" fill="#3b82f6" font-size="10" font-weight="600" font-family="Inter, sans-serif" letter-spacing="2">TXRESOLVE AGENT SYSTEM</text>
+
+  <!-- INGRESS -->
+  <rect x="225" y="130" width="200" height="64" rx="10" fill="url(#gIngress)" opacity="0.15"/>
+  <rect x="225" y="130" width="200" height="64" rx="10" fill="none" stroke="url(#gIngress)" stroke-width="1.5"/>
+  <text x="325" y="157" text-anchor="middle" fill="#c7d2fe" font-size="13" font-weight="600" font-family="Inter, sans-serif">Ingress Gateway</text>
+  <text x="325" y="177" text-anchor="middle" fill="#a1a1aa" font-size="10" font-family="Inter, sans-serif">Validate | Normalize | Deduplicate</text>
+
+  <!-- ORCHESTRATOR -->
+  <rect x="450" y="130" width="200" height="64" rx="10" fill="url(#gOrch)" opacity="0.15"/>
+  <rect x="450" y="130" width="200" height="64" rx="10" fill="none" stroke="url(#gOrch)" stroke-width="1.5"/>
+  <text x="550" y="157" text-anchor="middle" fill="#bfdbfe" font-size="13" font-weight="600" font-family="Inter, sans-serif">Orchestrator</text>
+  <text x="550" y="177" text-anchor="middle" fill="#a1a1aa" font-size="10" font-family="Inter, sans-serif">Sequence | Priority | SLA Timers</text>
+
+  <!-- INVESTIGATION POOL -->
+  <rect x="250" y="250" width="400" height="110" rx="10" fill="url(#gInvest)" opacity="0.08"/>
+  <rect x="250" y="250" width="400" height="110" rx="10" fill="none" stroke="url(#gInvest)" stroke-width="1.5"/>
+  <text x="450" y="275" text-anchor="middle" fill="#fde68a" font-size="13" font-weight="600" font-family="Inter, sans-serif">Investigation Agents (Parallel Fan-Out)</text>
+  <text x="450" y="295" text-anchor="middle" fill="#a1a1aa" font-size="10" font-family="Inter, sans-serif">7 Specialist Detectives | No LLM | Read-Only | Timeout-Protected</text>
+  <!-- Mini boxes for investigators -->
+  <rect x="270" y="310" width="70" height="36" rx="4" fill="#1f1f23" stroke="#f59e0b" stroke-width="0.5"/><text x="305" y="332" text-anchor="middle" fill="#fbbf24" font-size="8" font-family="Inter, sans-serif">Transaction</text>
+  <rect x="348" y="310" width="70" height="36" rx="4" fill="#1f1f23" stroke="#f59e0b" stroke-width="0.5"/><text x="383" y="332" text-anchor="middle" fill="#fbbf24" font-size="8" font-family="Inter, sans-serif">Balance</text>
+  <rect x="426" y="310" width="70" height="36" rx="4" fill="#1f1f23" stroke="#f59e0b" stroke-width="0.5"/><text x="461" y="332" text-anchor="middle" fill="#fbbf24" font-size="8" font-family="Inter, sans-serif">Beneficiary</text>
+  <rect x="504" y="310" width="70" height="36" rx="4" fill="#1f1f23" stroke="#f59e0b" stroke-width="0.5"/><text x="539" y="332" text-anchor="middle" fill="#fbbf24" font-size="8" font-family="Inter, sans-serif">Compliance</text>
+
+  <!-- DECISION ENGINE -->
+  <rect x="310" y="415" width="280" height="70" rx="10" fill="url(#gDecision)" opacity="0.15"/>
+  <rect x="310" y="415" width="280" height="70" rx="10" fill="none" stroke="url(#gDecision)" stroke-width="1.5"/>
+  <text x="450" y="443" text-anchor="middle" fill="#e9d5ff" font-size="13" font-weight="600" font-family="Inter, sans-serif">Decision Engine</text>
+  <text x="450" y="463" text-anchor="middle" fill="#a1a1aa" font-size="10" font-family="Inter, sans-serif">Rules + LLM Advisor (GPT-4o) | Confidence Scoring</text>
+  <text x="450" y="478" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">8 Actions: RETRY | REPAIR | HOLD | CANCEL | ESCALATE | DEFER</text>
+
+  <!-- GUARDRAILS -->
+  <rect x="310" y="530" width="280" height="56" rx="10" fill="url(#gGuard)" opacity="0.12"/>
+  <rect x="310" y="530" width="280" height="56" rx="10" fill="none" stroke="url(#gGuard)" stroke-width="1.5"/>
+  <text x="450" y="554" text-anchor="middle" fill="#fca5a5" font-size="13" font-weight="600" font-family="Inter, sans-serif">Guardrail Pipeline</text>
+  <text x="450" y="574" text-anchor="middle" fill="#a1a1aa" font-size="10" font-family="Inter, sans-serif">Allowlist | Confidence Floor | Hallucination Check | PII</text>
+
+  <!-- EGRESS -->
+  <rect x="310" y="630" width="280" height="56" rx="10" fill="url(#gEgress)" opacity="0.12"/>
+  <rect x="310" y="630" width="280" height="56" rx="10" fill="none" stroke="url(#gEgress)" stroke-width="1.5"/>
+  <text x="450" y="654" text-anchor="middle" fill="#86efac" font-size="13" font-weight="600" font-family="Inter, sans-serif">Egress Executor</text>
+  <text x="450" y="674" text-anchor="middle" fill="#a1a1aa" font-size="10" font-family="Inter, sans-serif">Idempotent | Pre-Check | Safe Fallback to HOLD</text>
+
+  <!-- FEEDBACK LOOP (right side) -->
+  <rect x="700" y="300" width="170" height="220" rx="10" fill="url(#gFeedback)" opacity="0.08"/>
+  <rect x="700" y="300" width="170" height="220" rx="10" fill="none" stroke="url(#gFeedback)" stroke-width="1.5"/>
+  <text x="785" y="330" text-anchor="middle" fill="#a5f3fc" font-size="11" font-weight="600" font-family="Inter, sans-serif">Feedback &amp;</text>
+  <text x="785" y="346" text-anchor="middle" fill="#a5f3fc" font-size="11" font-weight="600" font-family="Inter, sans-serif">Replay Loop</text>
+  <text x="785" y="375" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">Status Events</text>
+  <text x="785" y="395" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">Retry Outcomes</text>
+  <text x="785" y="415" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">Human Overrides</text>
+  <text x="785" y="445" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">Decision Replay</text>
+  <text x="785" y="465" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">Outcome Tracking</text>
+  <text x="785" y="495" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">Rule Refinement</text>
+
+  <!-- External Outputs (right) -->
+  <rect x="940" y="200" width="140" height="190" rx="8" fill="#18181b" stroke="#27272a" stroke-width="1"/>
+  <text x="1010" y="225" text-anchor="middle" fill="#a1a1aa" font-size="10" font-weight="600" font-family="Inter, sans-serif">OUTPUTS</text>
+  <text x="1010" y="255" text-anchor="middle" fill="#22c55e" font-size="10" font-family="Inter, sans-serif">Retry / Repair</text>
+  <text x="1010" y="275" text-anchor="middle" fill="#eab308" font-size="10" font-family="Inter, sans-serif">Hold Payment</text>
+  <text x="1010" y="295" text-anchor="middle" fill="#ef4444" font-size="10" font-family="Inter, sans-serif">Escalate to Human</text>
+  <text x="1010" y="315" text-anchor="middle" fill="#a855f7" font-size="10" font-family="Inter, sans-serif">Cancel Safely</text>
+  <text x="1010" y="335" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="Inter, sans-serif">Defer to Next Cycle</text>
+  <text x="1010" y="365" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">+ Notifications</text>
+  <text x="1010" y="380" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">+ Audit Trail</text>
+
+  <!-- Cross-Cutting Bar (bottom) -->
+  <rect x="225" y="720" width="650" height="40" rx="8" fill="#1f1f23" stroke="#27272a" stroke-width="1"/>
+  <text x="550" y="744" text-anchor="middle" fill="#71717a" font-size="10" font-weight="500" font-family="Inter, sans-serif">CROSS-CUTTING: Observability (OpenTelemetry) | Audit Log (Immutable) | Config Store | Kill Switches | Distributed Tracing</text>
+
+  <!-- ARROWS -->
+  <!-- Rails to Ingress -->
+  <path d="M 160 280 L 220 165" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- Ingress to Orchestrator -->
+  <path d="M 425 162 L 445 162" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- Orchestrator to Investigators -->
+  <path d="M 550 194 L 450 245" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- Investigators to Decision -->
+  <path d="M 450 360 L 450 410" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- Decision to Guardrails -->
+  <path d="M 450 485 L 450 525" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- Guardrails to Egress -->
+  <path d="M 450 586 L 450 625" fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- Egress to Outputs -->
+  <path d="M 590 658 L 935 300" fill="none" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  <!-- Feedback loop arrow back -->
+  <path d="M 785 520 C 785 600, 700 640, 595 450" fill="none" stroke="#06b6d4" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <!-- Orchestrator to Feedback -->
+  <path d="M 650 162 C 720 162, 750 250, 785 295" fill="none" stroke="#06b6d4" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- LLM Provider Box (top right) -->
+  <rect x="750" y="120" width="140" height="80" rx="8" fill="#1f1f23" stroke="#6366f1" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="820" y="145" text-anchor="middle" fill="#818cf8" font-size="10" font-weight="600" font-family="Inter, sans-serif">LLM PROVIDERS</text>
+  <text x="820" y="167" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">Primary: GPT-4o</text>
+  <text x="820" y="183" text-anchor="middle" fill="#71717a" font-size="9" font-family="Inter, sans-serif">Fallback: Claude Sonnet</text>
+  <text x="820" y="195" text-anchor="middle" fill="#71717a" font-size="8" font-family="Inter, sans-serif">Degradation: Rule-only</text>
+  <!-- Arrow from LLM to Decision -->
+  <path d="M 750 175 L 595 445" fill="none" stroke="#6366f1" stroke-width="1" stroke-dasharray="3,3"/>
+
+</svg>
+</div>
+</body>
+</html>
