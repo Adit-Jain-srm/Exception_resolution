@@ -98,7 +98,7 @@ class DecisionEngine:
             return self._build_decision(
                 case, ResolutionAction.ESCALATE_OPERATIONS, Confidence.LOW,
                 "Cannot determine account balance — escalating for manual review",
-                [], ["RULE: insufficient_funds_no_evidence → escalate"],
+                [], ["insufficient_funds_no_evidence → escalate"],
                 RiskLevel.MEDIUM,
             )
 
@@ -112,7 +112,7 @@ class DecisionEngine:
                 f"Shortfall of {shortfall} covered by pending credits of {pending_credits}. "
                 f"Holding for fund availability.",
                 [balance_evidence.evidence_id],
-                ["RULE: shortfall_covered_by_pending → hold_pending_funds"],
+                ["shortfall_covered_by_pending → hold_pending_funds"],
                 RiskLevel.LOW,
             )
 
@@ -121,7 +121,7 @@ class DecisionEngine:
             f"Insufficient balance. Shortfall: {shortfall}. Pending credits: {pending_credits}. "
             f"Holding for client funding.",
             [balance_evidence.evidence_id],
-            ["RULE: insufficient_funds → hold_pending_funds"],
+            ["insufficient_funds → hold_pending_funds"],
             RiskLevel.LOW,
         )
 
@@ -137,7 +137,7 @@ class DecisionEngine:
                 f"Confirmed duplicate of payment {data.get('original_payment_id')} "
                 f"which completed successfully. Safe to cancel.",
                 [dup_evidence.evidence_id],
-                ["RULE: duplicate_confirmed_completed → cancel_safely"],
+                ["duplicate_confirmed_completed → cancel_safely"],
                 RiskLevel.MEDIUM,
             )
 
@@ -146,7 +146,7 @@ class DecisionEngine:
                 case, ResolutionAction.ESCALATE_OPERATIONS, Confidence.LOW,
                 "Potential duplicate found but match is not exact. Requires manual verification.",
                 [dup_evidence.evidence_id],
-                ["RULE: duplicate_uncertain_match → escalate"],
+                ["duplicate_uncertain_match → escalate"],
                 RiskLevel.MEDIUM,
             )
 
@@ -154,7 +154,7 @@ class DecisionEngine:
             case, ResolutionAction.CANCEL_SAFELY, Confidence.HIGH,
             "Duplicate payment detected. Cancelling to prevent double-debit.",
             [dup_evidence.evidence_id],
-            ["RULE: duplicate_detected → cancel_safely"],
+            ["duplicate_detected → cancel_safely"],
             RiskLevel.MEDIUM,
         )
 
@@ -170,7 +170,7 @@ class DecisionEngine:
                 f"Invalid IFSC '{data.get('original_ifsc')}' auto-corrected to "
                 f"'{data.get('suggested_correction')}'. Repairing and retrying.",
                 [ben_evidence.evidence_id],
-                ["RULE: beneficiary_auto_correctable → repair_and_retry"],
+                ["beneficiary_auto_correctable → repair_and_retry"],
                 RiskLevel.MEDIUM,
             )
 
@@ -180,7 +180,7 @@ class DecisionEngine:
                 "Beneficiary details invalid but prior successful payments exist. "
                 "Possible directory change — requires manual investigation.",
                 [ben_evidence.evidence_id],
-                ["RULE: beneficiary_invalid_but_prior_success → escalate"],
+                ["beneficiary_invalid_but_prior_success → escalate"],
                 RiskLevel.MEDIUM,
             )
 
@@ -189,7 +189,7 @@ class DecisionEngine:
             "Beneficiary details invalid and no auto-correction available. "
             "Holding for client to provide corrected details.",
             [ben_evidence.evidence_id],
-            ["RULE: beneficiary_invalid_no_correction → hold_pending_input"],
+            ["beneficiary_invalid_no_correction → hold_pending_input"],
             RiskLevel.LOW,
         )
 
@@ -200,7 +200,7 @@ class DecisionEngine:
                 case, ResolutionAction.ESCALATE_COMPLIANCE, Confidence.MEDIUM,
                 "Compliance hold detected but screening details unavailable. Escalating.",
                 [],
-                ["RULE: compliance_hold_no_evidence → escalate_compliance"],
+                ["compliance_hold_no_evidence → escalate_compliance"],
                 RiskLevel.HIGH,
             )
 
@@ -211,7 +211,7 @@ class DecisionEngine:
                 f"Compliance hold type: {data.get('hold_type')}. "
                 f"Requires mandatory human review per regulatory requirements.",
                 [comp_evidence.evidence_id],
-                ["RULE: compliance_requires_human → escalate_compliance"],
+                ["compliance_requires_human → escalate_compliance"],
                 RiskLevel.HIGH,
             )
 
@@ -219,7 +219,7 @@ class DecisionEngine:
             case, ResolutionAction.ESCALATE_COMPLIANCE, Confidence.HIGH,
             "Compliance hold — escalating to compliance team regardless of auto-clear status.",
             [comp_evidence.evidence_id],
-            ["RULE: compliance_hold_always_escalate"],
+            ["compliance_hold_always_escalate"],
             RiskLevel.HIGH,
         )
 
@@ -236,7 +236,7 @@ class DecisionEngine:
                 case, ResolutionAction.ESCALATE_OPERATIONS, Confidence.HIGH,
                 "Maximum retry attempts exhausted. Escalating for manual intervention.",
                 [e.evidence_id for e in [net_evidence, retry_evidence] if e],
-                ["RULE: max_retries_exhausted → escalate"],
+                ["max_retries_exhausted → escalate"],
                 RiskLevel.MEDIUM,
             )
 
@@ -248,7 +248,7 @@ class DecisionEngine:
                     f"Network outage detected. Estimated recovery: {recovery}min. "
                     f"Scheduling retry after recovery window.",
                     [net_evidence.evidence_id],
-                    ["RULE: network_down_recoverable → auto_retry"],
+                    ["network_down_recoverable → auto_retry"],
                     RiskLevel.LOW,
                 )
             else:
@@ -256,7 +256,7 @@ class DecisionEngine:
                     case, ResolutionAction.HOLD_PENDING_INPUT, Confidence.MEDIUM,
                     f"Network outage with estimated recovery > 30min ({recovery}min). Holding.",
                     [net_evidence.evidence_id],
-                    ["RULE: network_down_extended → hold"],
+                    ["network_down_extended → hold"],
                     RiskLevel.LOW,
                 )
 
@@ -264,7 +264,7 @@ class DecisionEngine:
             case, ResolutionAction.AUTO_RETRY, Confidence.MEDIUM,
             "Network failure — transient. Retrying with exponential backoff.",
             [e.evidence_id for e in [net_evidence, retry_evidence] if e],
-            ["RULE: network_failure_transient → auto_retry"],
+            ["network_failure_transient → auto_retry"],
             RiskLevel.LOW,
         )
 
@@ -274,7 +274,7 @@ class DecisionEngine:
             "Payment submitted after rail cutoff time. "
             "Deferring to next processing cycle automatically.",
             [e.evidence_id for e in evidence.values()],
-            ["RULE: cutoff_miss → defer_to_next_cycle"],
+            ["cutoff_miss → defer_to_next_cycle"],
             RiskLevel.LOW,
         )
 
@@ -288,7 +288,7 @@ class DecisionEngine:
                 "Uncertain retry outcome resolved: original payment completed. "
                 "Cancelling retry to prevent duplicate.",
                 [e.evidence_id for e in [retry_evidence, dup_evidence] if e],
-                ["RULE: uncertain_retry_duplicate_found → cancel"],
+                ["uncertain_retry_duplicate_found → cancel"],
                 RiskLevel.MEDIUM,
             )
 
@@ -300,7 +300,7 @@ class DecisionEngine:
                     f"Consistent failure at '{data['consistent_failure_point']}' point. "
                     f"Requires investigation before further retries.",
                     [retry_evidence.evidence_id],
-                    ["RULE: uncertain_retry_consistent_failure → escalate"],
+                    ["uncertain_retry_consistent_failure → escalate"],
                     RiskLevel.MEDIUM,
                 )
             if data.get("retries_remaining", 0) > 0:
@@ -309,7 +309,7 @@ class DecisionEngine:
                     f"Retry outcome uncertain. {data.get('retries_remaining')} retries remaining. "
                     f"Attempting cautious retry with extended timeout.",
                     [retry_evidence.evidence_id],
-                    ["RULE: uncertain_retry_retries_available → auto_retry_cautious"],
+                    ["uncertain_retry_retries_available → auto_retry_cautious"],
                     RiskLevel.MEDIUM,
                     requires_approval=case.amount >= self._high_value_threshold,
                 )
@@ -318,7 +318,7 @@ class DecisionEngine:
             case, ResolutionAction.ESCALATE_OPERATIONS, Confidence.LOW,
             "Cannot determine retry safety. Escalating for manual investigation.",
             [e.evidence_id for e in evidence.values() if e],
-            ["RULE: uncertain_retry_no_clarity → escalate"],
+            ["uncertain_retry_no_clarity → escalate"],
             RiskLevel.MEDIUM,
         )
 
@@ -328,7 +328,7 @@ class DecisionEngine:
             "Unable to determine appropriate action from available evidence. "
             "Escalating for manual review.",
             [e.evidence_id for e in evidence.values()],
-            ["RULE: fallback_insufficient_evidence → escalate"],
+            ["fallback_insufficient_evidence → escalate"],
             RiskLevel.MEDIUM,
         )
 
