@@ -1,0 +1,85 @@
+{
+  "system": {
+    "investigation_timeout_seconds": 15.0,
+    "max_concurrent_cases": 100,
+    "max_llm_calls_per_case": 5,
+    "high_value_threshold": 50000
+  },
+  "sla_windows": {
+    "CRITICAL": "5m",
+    "HIGH": "15m",
+    "MEDIUM": "1h",
+    "LOW": "4h"
+  },
+  "retry_policy": {
+    "max_retries": 5,
+    "base_backoff_seconds": 30,
+    "max_backoff_seconds": 3600,
+    "backoff_multiplier": 2.0
+  },
+  "rails": {
+    "SWIFT": {
+      "cutoff_time": "17:00",
+      "retry_window_hours": 24,
+      "max_amount_auto_resolve": 100000
+    },
+    "NEFT": {
+      "cutoff_time": "17:00",
+      "retry_window_hours": 4,
+      "max_amount_auto_resolve": 200000
+    },
+    "UPI": {
+      "cutoff_time": null,
+      "retry_window_hours": 1,
+      "max_amount_auto_resolve": 100000
+    },
+    "ACH": {
+      "cutoff_time": "16:00",
+      "retry_window_hours": 24,
+      "max_amount_auto_resolve": 500000
+    },
+    "SEPA": {
+      "cutoff_time": "14:00",
+      "retry_window_hours": 48,
+      "max_amount_auto_resolve": 250000
+    },
+    "INTERNAL": {
+      "cutoff_time": null,
+      "retry_window_hours": 0.5,
+      "max_amount_auto_resolve": 1000000
+    }
+  },
+  "llm": {
+    "primary_provider": "openai",
+    "primary_model": "gpt-4o",
+    "routing_model": "gpt-4o-mini",
+    "fallback_provider": "anthropic",
+    "fallback_model": "claude-3-5-sonnet-20241022",
+    "temperature": 0.0,
+    "max_tokens_input": 4000,
+    "max_tokens_output": 1000,
+    "timeout_seconds": 5.0,
+    "monthly_budget_usd": 500
+  },
+  "guardrails": {
+    "confidence_floors": {
+      "LOW_RISK": "MEDIUM",
+      "MEDIUM_RISK": "MEDIUM",
+      "HIGH_RISK": "HIGH"
+    },
+    "hallucination_markers": [
+      "I think",
+      "I believe",
+      "probably",
+      "might be",
+      "as an AI",
+      "I cannot"
+    ],
+    "max_retries_on_malformed_output": 2
+  },
+  "kill_switches": {
+    "global_auto_resolve_enabled": true,
+    "rails_disabled": [],
+    "exception_types_disabled": []
+  }
+}
