@@ -520,3 +520,122 @@ No architectural changes needed — the system is designed for extensibility.
 - Multi-tenant support: partition by `client_id` + `payment_rail`
 - Each institution can have different thresholds, SLAs, and escalation policies
 - Compliance rules vary by jurisdiction — also configuration-driven
+
+---
+
+## 14. EXPLAINABILITY
+
+### Q: How does the system explain its decisions to humans?
+
+**A:** Every decision generates a **multi-layer explanation** designed for different audiences:
+
+1. **Justification text** — Human-readable sentence explaining WHY this action was chosen (for operations staff, auditors)
+2. **Rules applied** — Exact rule identifiers that triggered (for engineers debugging)
+3. **Evidence cited** — Which specific evidence items influenced the decision, with confidence levels
+4. **Risk assessment** — Why this action has LOW/MEDIUM/HIGH risk
+5. **Approval rationale** — If approval is required, why (amount threshold? low confidence? compliance flag?)
+
+Example for an INSUFFICIENT_FUNDS case:
+```
+Justification: "Shortfall of 27,000 covered by pending credits of 32,000. 
+               Holding for fund availability."
+Rules Applied: ["RULE: shortfall_covered_by_pending → hold_pending_funds"]
+Evidence Used: [AccountBalanceInvestigator (confidence: HIGH)]
+Risk Level:   LOW (holding is safe — no money moves)
+Approval:     Not required (amount < threshold, risk is LOW)
+```
+
+---
+
+### Q: Can a non-technical person understand why a payment was held?
+
+**A:** Yes. The justification layer is specifically designed for non-technical readers:
+- Uses natural language, not codes
+- States the CAUSE ("shortfall of 27,000"), the FINDING ("pending credits of 32,000 incoming"), and the ACTION ("holding until funds available")
+- Avoids jargon — says "held for fund availability" not "state transition to HELD_PENDING_FUNDS"
+- If escalated, explains what the human reviewer needs to verify
+
+---
+
+### Q: How does explainability differ from auditability?
+
+**A:**
+| Aspect | Explainability | Auditability |
+|--------|---------------|-------------|
+| **Audience** | Operations staff, clients, regulators | Compliance officers, forensic investigators |
+| **Purpose** | Understand WHY this action was taken | Prove WHAT happened and WHEN |
+| **Format** | Natural language justification | Structured audit log entries with timestamps |
+| **Granularity** | Decision-level (one explanation per case) | Action-level (every state change, every agent call) |
+| **Mutability** | Can be regenerated from evidence | Immutable, append-only, legally binding |
+
+Both are implemented. Explainability is generated AT decision time. Auditability is recorded THROUGHOUT the entire case lifecycle.
+
+---
+
+### Q: What makes the explanations trustworthy (not just plausible-sounding)?
+
+**A:** Three integrity guarantees:
+
+1. **Evidence-backed** — Every claim in the justification MUST reference actual evidence. If the justification says "pending credits of 32,000" — that number came from the AccountBalanceInvestigator, not the LLM's imagination. The guardrail pipeline rejects justifications that reference non-existent evidence.
+
+2. **Rule-traceable** — Each justification cites the exact rule that was applied. You can look up `RULE: shortfall_covered_by_pending → hold_pending_funds` in the rule configuration and verify the logic.
+
+3. **Reproducible** — Given the same evidence bundle, the same explanation will be generated every time (temperature 0, deterministic rules). If you replay the case a year later, you get the same justification.
+
+---
+
+### Q: How do you explain guardrail overrides?
+
+**A:** When a guardrail overrides a decision, the explanation explicitly states:
+- What the Decision Engine originally recommended
+- Which guardrail blocked it and why
+- What the safe fallback action is
+
+Example:
+```
+"Retry outcome uncertain. 3 retries remaining. Attempting cautious retry 
+with extended timeout. [GUARDRAIL OVERRIDE: Confidence LOW is below minimum 
+MEDIUM for risk level MEDIUM. Overridden to ESCALATE_OPERATIONS for human review.]"
+```
+
+The override is NEVER hidden. The original reasoning is preserved alongside the override explanation.
+
+---
+
+### Q: Can clients see why their payment was held?
+
+**A:** The system generates **tiered explanations**:
+- **Internal (full)**: All evidence, rules, confidence scores, agent traces
+- **Operations (summary)**: Justification + action + what to check next
+- **Client-facing (safe)**: Simplified reason without revealing system internals
+
+Client-facing example: "Your payment of INR 75,000 is temporarily held pending fund availability. Expected resolution: within 4 hours."
+
+This avoids exposing:
+- Internal account details of other parties
+- Compliance screening logic (regulatory requirement to not disclose)
+- System architecture details
+
+---
+
+### Q: How does explainability work for compliance escalations?
+
+**A:** Compliance cases get EXTRA explanation layers:
+1. **What triggered the hold** — "Payment flagged by sanctions screening: PEP_FLAG"
+2. **Why it cannot be auto-resolved** — "Regulatory requirement mandates human review for all sanctions matches"
+3. **What the reviewer needs to verify** — "Confirm beneficiary identity against sanctions list. Check if name match is false positive."
+4. **Similar cases context** — "85% of similar PEP_FLAG cases were cleared after manual verification"
+
+This gives compliance officers maximum context to make their decision quickly.
+
+---
+
+### Q: Is explainability a requirement for production or a nice-to-have?
+
+**A:** It's a **hard requirement** for three reasons:
+
+1. **Regulatory** — RBI/banking regulations require institutions to explain why a payment was held/cancelled/delayed to the customer within defined timeframes.
+
+2. **Operational** — When a human reviewer picks up an escalated case, they need to understand what the system already investigated and why it couldn't resolve automatically. Without explanation, they repeat all the work.
+
+3. **Trust-building** — Operations teams will only trust (and not override) automated decisions if they can understand the reasoning. Opaque AI decisions get overridden reflexively, defeating the purpose of automation.
