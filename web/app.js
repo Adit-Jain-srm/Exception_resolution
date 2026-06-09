@@ -32,6 +32,13 @@
             tab.classList.add('active');
             const view = document.getElementById(tab.dataset.tab);
             if (view) view.classList.add('active');
+
+            if (tab.dataset.tab === 'traces' && demoResults.length > 0) {
+                renderTraces(demoResults, 0);
+            }
+            if (tab.dataset.tab === 'explainability' && demoResults.length > 0) {
+                renderExplainability(demoResults);
+            }
         });
     });
 
@@ -130,6 +137,7 @@
             renderDemoResults();
             updateStats(data);
             renderExplainability(demoResults);
+            renderTraces(demoResults, 0);
         } catch (err) {
             document.getElementById('cases-grid').innerHTML = `<div class="empty-state"><p style="color:var(--danger)">Error: ${err.message}</p><p class="empty-hint">Make sure the server is running: python -m uvicorn src.server:app --port 8000</p></div>`;
         }
@@ -147,6 +155,8 @@
             demoResults.push(data);
             currentCaseIndex++;
             renderDemoResults();
+            renderTraces(demoResults, demoResults.length - 1);
+            renderExplainability(demoResults);
         } catch (err) {
             document.getElementById('cases-grid').innerHTML = `<div class="empty-state"><p style="color:var(--danger)">Error: ${err.message}</p></div>`;
         }
