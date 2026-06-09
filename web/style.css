@@ -207,8 +207,25 @@ body { font-family: var(--font); background: var(--bg-primary); color: var(--tex
 .guardrail-item p { font-size: 11px; color: var(--text-muted); margin: 0; }
 
 .guardrail-demo-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 24px; }
-.guardrail-demo-card h3 { font-size: 15px; margin-bottom: 6px; }
-.guardrail-demo-card > p { font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; }
+.demo-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.guardrail-demo-card h3 { font-size: 15px; margin-bottom: 0; }
+.guardrail-demo-card > p { font-size: 12px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6; }
+.demo-outcome { margin-top: 16px; padding: 12px; background: var(--bg-elevated); border-radius: var(--radius-xs); font-size: 12px; color: var(--text-secondary); line-height: 1.6; border-left: 3px solid var(--success); }
+.demo-outcome strong { color: var(--success); }
+
+.guardrail-principle { margin-bottom: 24px; }
+.principle-box { display: flex; align-items: center; gap: 20px; padding: 24px; background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(139,92,246,0.04)); border: 1px solid rgba(99,102,241,0.2); border-radius: var(--radius); }
+.principle-icon { flex-shrink: 0; color: var(--accent-hover); }
+.principle-text { flex: 1; }
+.principle-text h3 { font-size: 14px; margin-bottom: 6px; color: var(--accent-hover); }
+.principle-text p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.principle-text strong { color: var(--text-primary); }
+.principle-stats { display: flex; gap: 16px; flex-shrink: 0; }
+.pstat { display: flex; flex-direction: column; align-items: center; padding: 8px 14px; background: var(--bg-card); border-radius: var(--radius-xs); border: 1px solid var(--border); }
+.pstat-num { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.pstat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; text-align: center; margin-top: 2px; }
+
+.layer-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .guardrail-flow-diagram { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; padding: 16px 0; }
 .gf-node { padding: 14px 18px; border-radius: var(--radius-sm); text-align: center; min-width: 180px; }
 .gf-node-title { font-size: 11px; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }

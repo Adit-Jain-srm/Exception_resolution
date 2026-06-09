@@ -261,73 +261,112 @@
         <!-- GUARDRAILS VIEW -->
         <section id="guardrails" class="view">
             <div class="section-header">
-                <h2>LLM Guardrails Architecture</h2>
-                <p class="subtitle">Multi-layer safety system preventing hallucinated or unsafe actions from reaching production systems</p>
+                <h2>LLM Safety & Guardrail Architecture</h2>
+                <p class="subtitle">Defense-in-depth framework ensuring no hallucinated, unsafe, or unauthorized action reaches production financial systems</p>
             </div>
+
+            <div class="guardrail-principle">
+                <div class="principle-box">
+                    <div class="principle-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                    </div>
+                    <div class="principle-text">
+                        <h3>Core Safety Principle</h3>
+                        <p><strong>LLMs ADVISE. Deterministic code EXECUTES.</strong> No LLM output directly triggers a financial action. Every recommendation passes through schema validation, action allowlist, confidence thresholds, and idempotency checks before any side-effect occurs.</p>
+                    </div>
+                    <div class="principle-stats">
+                        <div class="pstat"><span class="pstat-num">5</span><span class="pstat-label">Validation Layers</span></div>
+                        <div class="pstat"><span class="pstat-num">0</span><span class="pstat-label">Direct LLM Executions</span></div>
+                        <div class="pstat"><span class="pstat-num">8</span><span class="pstat-label">Allowed Actions Only</span></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="guardrail-layers">
                 <div class="guardrail-layer layer-input">
                     <div class="layer-header">
-                        <h3>Layer 1: Input Guardrails</h3>
-                        <span class="layer-badge lb-blue">Before LLM</span>
+                        <div>
+                            <h3>Pre-Inference Controls</h3>
+                            <p class="layer-desc">Sanitize, constrain, and protect data before it reaches the LLM</p>
+                        </div>
+                        <span class="layer-badge lb-blue">LAYER 1 &mdash; INPUT</span>
                     </div>
                     <div class="guardrail-items">
-                        <div class="guardrail-item"><div class="gi-icon">&#128274;</div><div><strong>PII Masking</strong><p>Account numbers and names masked before LLM sees data</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#9989;</div><div><strong>Schema Validation</strong><p>Evidence structure validated before prompt construction</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#128737;</div><div><strong>Injection Defense</strong><p>External text sanitized against prompt injection attacks</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#128200;</div><div><strong>Token Budget</strong><p>Hard cap: 4K input, 1K output per LLM call</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128274;</div><div><strong>PII Data Isolation</strong><p>Account numbers, beneficiary names, and personal identifiers masked with tokenization. Amounts and routing codes preserved (required for decisions). LLM never sees recoverable PII.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128737;</div><div><strong>Prompt Injection Defense</strong><p>All external-origin text (error messages, compliance notes, bank responses) sanitized through multi-pass filter. Control characters stripped. Layered prompt architecture isolates system instructions from user data.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#9989;</div><div><strong>Schema Enforcement</strong><p>Evidence bundle structure validated against Pydantic schema before prompt construction. Malformed or unexpected fields rejected — prevents context poisoning from corrupted upstream data.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128200;</div><div><strong>Token Budget &amp; Context Control</strong><p>Hard cap: 4,096 tokens input, 1,024 tokens output. Evidence truncated to decision-relevant fields only. Raw database rows never sent. Controls cost and prevents attention dilution.</p></div></div>
                     </div>
                 </div>
+
                 <div class="guardrail-layer layer-output">
                     <div class="layer-header">
-                        <h3>Layer 2: Output Guardrails</h3>
-                        <span class="layer-badge lb-red">After LLM</span>
+                        <div>
+                            <h3>Post-Inference Validation</h3>
+                            <p class="layer-desc">Verify LLM output is safe, valid, and authorized before any action proceeds</p>
+                        </div>
+                        <span class="layer-badge lb-red">LAYER 2 &mdash; OUTPUT</span>
                     </div>
                     <div class="guardrail-items">
-                        <div class="guardrail-item"><div class="gi-icon">&#9940;</div><div><strong>Action Allowlist</strong><p>Only 8 predefined actions permitted. All others rejected.</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#128202;</div><div><strong>Confidence Floor</strong><p>Low confidence decisions auto-escalate to human review</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#128065;</div><div><strong>Hallucination Detection</strong><p>Rejects decisions referencing non-existent evidence IDs</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#128176;</div><div><strong>Amount Threshold</strong><p>Transactions &gt;&#8377;50K require human approval</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#9878;</div><div><strong>Contradiction Check</strong><p>LLM vs rule-engine disagreement triggers escalation</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#9940;</div><div><strong>Action Allowlist Gate</strong><p>LLM output MUST match one of exactly 8 predefined actions (AUTO_RETRY, REPAIR_AND_RETRY, HOLD_PENDING_FUNDS, HOLD_PENDING_INPUT, CANCEL_SAFELY, ESCALATE_COMPLIANCE, ESCALATE_OPERATIONS, DEFER_TO_NEXT_CYCLE). Any hallucinated action is immediately rejected.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128202;</div><div><strong>Confidence Floor Enforcement</strong><p>Risk-tiered minimum confidence: LOW risk requires MEDIUM confidence, MEDIUM risk requires MEDIUM, HIGH risk requires HIGH. Decisions below floor auto-escalate to human — system never acts on low-confidence recommendations.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128065;</div><div><strong>Hallucination Detection</strong><p>Cross-references all evidence IDs cited in the decision against the actual evidence bundle. If the LLM references evidence that doesn't exist, the response is fabricated — reject immediately and escalate.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128176;</div><div><strong>Financial Threshold Gate</strong><p>Transactions exceeding configurable threshold (default: &#8377;50,000 / $50,000) require mandatory human approval regardless of confidence. Prevents high-value automated actions without oversight.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#9878;</div><div><strong>Rule-LLM Contradiction Detection</strong><p>When the deterministic rule engine and LLM produce different recommendations, neither is trusted blindly. Case escalated to human review with both analyses presented. Protects against both rule gaps and LLM errors.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128220;</div><div><strong>Justification Integrity Check</strong><p>Scans justification text for uncertainty markers ("I think", "probably", "might be"). Decisions must be stated factually based on evidence. Speculative language indicates the model is uncertain — reject and escalate.</p></div></div>
                     </div>
                 </div>
+
                 <div class="guardrail-layer layer-operational">
                     <div class="layer-header">
-                        <h3>Layer 3: Operational Guardrails</h3>
-                        <span class="layer-badge lb-yellow">Runtime</span>
+                        <div>
+                            <h3>Runtime Safety Controls</h3>
+                            <p class="layer-desc">Operational guardrails protecting system availability, cost, and auditability</p>
+                        </div>
+                        <span class="layer-badge lb-yellow">LAYER 3 &mdash; OPERATIONAL</span>
                     </div>
                     <div class="guardrail-items">
-                        <div class="guardrail-item"><div class="gi-icon">&#128260;</div><div><strong>Provider Failover</strong><p>OpenAI &rarr; Anthropic &rarr; rule-only degradation</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#9201;</div><div><strong>Rate Limiter</strong><p>Priority queue: critical cases get LLM slots first</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#128178;</div><div><strong>Cost Circuit Breaker</strong><p>Monthly budget cap with auto-disable at 100%</p></div></div>
-                        <div class="guardrail-item"><div class="gi-icon">&#128204;</div><div><strong>Model Version Pinning</strong><p>Exact version recorded for audit reproducibility</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128260;</div><div><strong>Multi-Provider Failover</strong><p>Primary: OpenAI GPT-4o &rarr; Failover: Anthropic Claude Sonnet &rarr; Degradation: Rule-only mode (no LLM). System never halts — gracefully degrades to deterministic processing. Human review flagged for degraded decisions.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#9201;</div><div><strong>Concurrency &amp; Rate Control</strong><p>Semaphore limits concurrent LLM calls (max 20). Priority queue ensures CRITICAL cases get inference slots first. Token bucket rate limiter per provider prevents quota exhaustion. Overflow cases degrade to rule-only path.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128178;</div><div><strong>Cost Circuit Breaker</strong><p>Per-case cap: $0.05 (max 5 LLM calls). Daily budget alert at 80%. Monthly hard stop at 100% — all cases route to rule-only mode. Prevents runaway costs from retry loops or prompt engineering attacks.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128204;</div><div><strong>Model Version Pinning &amp; Audit</strong><p>Exact model version (e.g., gpt-4o-2024-11-20) recorded with every decision. Enables deterministic replay for regulatory audit. Version drift detected and alerted. Reproducibility gap logged if pinned version deprecated.</p></div></div>
+                        <div class="guardrail-item"><div class="gi-icon">&#128721;</div><div><strong>Kill Switch Matrix</strong><p>Global disable (all auto-resolution stops). Per-rail disable (e.g., pause UPI during outage). Per-exception-type disable. Amount ceiling adjustment. All togglable in &lt;60 seconds without deployment.</p></div></div>
                     </div>
                 </div>
             </div>
+
             <div class="guardrail-demo-card">
-                <h3>Live Guardrail Override Example</h3>
-                <p>The UNCERTAIN_RETRY case demonstrates how guardrails protect against unsafe LLM recommendations:</p>
+                <div class="demo-card-header">
+                    <h3>Guardrail Override in Action</h3>
+                    <span class="layer-badge lb-red">LIVE EXAMPLE</span>
+                </div>
+                <p>The UNCERTAIN_RETRY case (PAY-2026-00107) demonstrates the confidence floor guardrail intercepting an unsafe LLM recommendation and applying a safe override:</p>
                 <div class="guardrail-flow-diagram">
                     <div class="gf-node gf-input">
-                        <div class="gf-node-title">Decision Engine Output</div>
-                        <div class="gf-node-detail">Action: AUTO_RETRY</div>
-                        <div class="gf-node-meta">confidence: LOW | risk: MEDIUM</div>
+                        <div class="gf-node-title">LLM Recommendation</div>
+                        <div class="gf-node-detail">AUTO_RETRY</div>
+                        <div class="gf-node-meta">confidence: LOW | risk: MEDIUM<br>Rule: uncertain_retry_retries_available</div>
                     </div>
                     <div class="gf-connector">
-                        <svg width="40" height="24"><path d="M0 12 L40 12" stroke="#6366f1" stroke-width="2" stroke-dasharray="4"/><polygon points="36,8 40,12 36,16" fill="#6366f1"/></svg>
+                        <svg width="48" height="24"><path d="M0 12 L48 12" stroke="#6366f1" stroke-width="2" stroke-dasharray="4"/><polygon points="44,8 48,12 44,16" fill="#6366f1"/></svg>
                     </div>
                     <div class="gf-node gf-blocked">
-                        <div class="gf-node-title">Confidence Floor Check</div>
-                        <div class="gf-node-detail">LOW &lt; MEDIUM (min for MEDIUM risk)</div>
+                        <div class="gf-node-title">Confidence Floor Gate</div>
+                        <div class="gf-node-detail">LOW &lt; MEDIUM required</div>
+                        <div class="gf-node-meta">Risk MEDIUM demands minimum confidence MEDIUM</div>
                         <div class="gf-node-badge">BLOCKED</div>
                     </div>
                     <div class="gf-connector">
-                        <svg width="40" height="24"><path d="M0 12 L40 12" stroke="#22c55e" stroke-width="2" stroke-dasharray="4"/><polygon points="36,8 40,12 36,16" fill="#22c55e"/></svg>
+                        <svg width="48" height="24"><path d="M0 12 L48 12" stroke="#22c55e" stroke-width="2" stroke-dasharray="4"/><polygon points="44,8 48,12 44,16" fill="#22c55e"/></svg>
                     </div>
                     <div class="gf-node gf-safe">
-                        <div class="gf-node-title">Safe Override Applied</div>
+                        <div class="gf-node-title">Safe Fallback Applied</div>
                         <div class="gf-node-detail">ESCALATE_OPERATIONS</div>
-                        <div class="gf-node-meta">Routed to human review</div>
+                        <div class="gf-node-meta">Case routed to human ops queue<br>Original reasoning preserved in audit</div>
                     </div>
+                </div>
+                <div class="demo-outcome">
+                    <strong>Outcome:</strong> Instead of a risky automatic retry with unknown state, the case is safely escalated to a human operator who can investigate the ambiguous retry history before deciding. The original LLM reasoning is preserved in the audit trail for review.
                 </div>
             </div>
         </section>
