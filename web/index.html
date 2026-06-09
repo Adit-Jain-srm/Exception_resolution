@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Exception Resolution Agent</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <h1>Payment Exception Resolution Agent</h1>
+        </div>
+        <div class="header-right">
+            <span class="badge badge-live">LIVE DEMO</span>
+            <span class="badge badge-version">v0.1.0</span>
+        </div>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab active" data-tab="pipeline">Pipeline</button>
+        <button class="tab" data-tab="demo">Run Demo</button>
+        <button class="tab" data-tab="agents">Agent Catalogue</button>
+        <button class="tab" data-tab="traces">Decision Traces</button>
+        <button class="tab" data-tab="guardrails">Guardrails</button>
+    </nav>
+
+    <main class="main">
+        <!-- PIPELINE VIEW -->
+        <section id="pipeline" class="view active">
+            <div class="pipeline-container">
+                <div class="pipeline-header">
+                    <h2>End-to-End Resolution Pipeline</h2>
+                    <p class="subtitle">Exception events flow left-to-right through specialized agents</p>
+                </div>
+                <div class="pipeline-flow">
+                    <div class="stage" data-stage="ingress">
+                        <div class="stage-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </div>
+                        <h3>Ingress</h3>
+                        <p>Validate & Dedup</p>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="stage" data-stage="orchestration">
+                        <div class="stage-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                        </div>
+                        <h3>Orchestrator</h3>
+                        <p>Sequence & Budget</p>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="stage stage-wide" data-stage="investigation">
+                        <div class="stage-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        </div>
+                        <h3>Investigation</h3>
+                        <p>7 Parallel Agents</p>
+                        <div class="parallel-indicator">
+                            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                        </div>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="stage" data-stage="decision">
+                        <div class="stage-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                        </div>
+                        <h3>Decision</h3>
+                        <p>Rules + LLM</p>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="stage" data-stage="guardrails">
+                        <div class="stage-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <h3>Guardrails</h3>
+                        <p>Safety Validation</p>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="stage" data-stage="egress">
+                        <div class="stage-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        </div>
+                        <h3>Egress</h3>
+                        <p>Execute Action</p>
+                    </div>
+                </div>
+
+                <div class="pipeline-details">
+                    <div class="detail-card">
+                        <h4>Concurrency Model</h4>
+                        <ul>
+                            <li>Cases processed in parallel (Kafka partitions)</li>
+                            <li>Investigators fan-out concurrently per case</li>
+                            <li>LLM calls rate-limited via semaphore (max 20)</li>
+                            <li>No shared mutable state between cases</li>
+                        </ul>
+                    </div>
+                    <div class="detail-card">
+                        <h4>LLM Strategy</h4>
+                        <ul>
+                            <li><strong>Decision Engine:</strong> GPT-4o (deep reasoning)</li>
+                            <li><strong>Orchestrator:</strong> GPT-4o-mini (fast routing)</li>
+                            <li><strong>Investigators:</strong> No LLM (deterministic)</li>
+                            <li><strong>Failover:</strong> OpenAI &rarr; Anthropic &rarr; Rule-only</li>
+                        </ul>
+                    </div>
+                    <div class="detail-card">
+                        <h4>Safety Guarantees</h4>
+                        <ul>
+                            <li>LLMs advise, deterministic code executes</li>
+                            <li>Action allowlist (no hallucinated actions)</li>
+                            <li>Confidence floor enforcement</li>
+                            <li>High-value gate (>$50K requires approval)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DEMO VIEW -->
+        <section id="demo" class="view">
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <button id="run-all-btn" class="btn btn-primary">Process All Exceptions</button>
+                    <button id="reset-btn" class="btn btn-secondary">Reset</button>
+                    <div class="demo-stats" id="demo-stats"></div>
+                </div>
+                <div class="cases-grid" id="cases-grid"></div>
+            </div>
+        </section>
+
+        <!-- AGENTS VIEW -->
+        <section id="agents" class="view">
+            <div class="agents-container">
+                <h2>Agent Catalogue</h2>
+                <p class="subtitle">Each agent has a distinct persona constraining its behavior, reasoning style, and authority</p>
+                <div class="agents-grid" id="agents-grid"></div>
+            </div>
+        </section>
+
+        <!-- TRACES VIEW -->
+        <section id="traces" class="view">
+            <div class="traces-container">
+                <h2>Decision Traces</h2>
+                <p class="subtitle">End-to-end trace showing how each case flows through the pipeline</p>
+                <div id="trace-selector" class="trace-selector"></div>
+                <div id="trace-detail" class="trace-detail"></div>
+            </div>
+        </section>
+
+        <!-- GUARDRAILS VIEW -->
+        <section id="guardrails" class="view">
+            <div class="guardrails-container">
+                <h2>LLM Guardrails Architecture</h2>
+                <p class="subtitle">Multi-layer safety preventing hallucinated or unsafe actions from reaching production</p>
+                <div class="guardrail-layers">
+                    <div class="guardrail-layer layer-input">
+                        <h3>Input Guardrails</h3>
+                        <div class="guardrail-items">
+                            <div class="guardrail-item"><span class="icon">&#128274;</span> PII Masking<p>Account numbers, names masked before LLM</p></div>
+                            <div class="guardrail-item"><span class="icon">&#9989;</span> Schema Validation<p>Evidence structure validated before prompt</p></div>
+                            <div class="guardrail-item"><span class="icon">&#128737;</span> Injection Defense<p>External text sanitized against prompt injection</p></div>
+                            <div class="guardrail-item"><span class="icon">&#128200;</span> Token Budget<p>Hard cap: 4K input, 1K output per call</p></div>
+                        </div>
+                    </div>
+                    <div class="guardrail-layer layer-output">
+                        <h3>Output Guardrails</h3>
+                        <div class="guardrail-items">
+                            <div class="guardrail-item"><span class="icon">&#9940;</span> Action Allowlist<p>Only predefined actions can pass through</p></div>
+                            <div class="guardrail-item"><span class="icon">&#128202;</span> Confidence Floor<p>Low confidence auto-escalates to human</p></div>
+                            <div class="guardrail-item"><span class="icon">&#128065;</span> Hallucination Detection<p>Rejects references to non-existent evidence</p></div>
+                            <div class="guardrail-item"><span class="icon">&#128176;</span> Amount Threshold<p>>50K requires human approval</p></div>
+                            <div class="guardrail-item"><span class="icon">&#9878;</span> Contradiction Check<p>LLM vs rule-engine disagreement triggers escalation</p></div>
+                        </div>
+                    </div>
+                    <div class="guardrail-layer layer-operational">
+                        <h3>Operational Guardrails</h3>
+                        <div class="guardrail-items">
+                            <div class="guardrail-item"><span class="icon">&#128260;</span> Provider Failover<p>OpenAI &rarr; Anthropic &rarr; rule-only degradation</p></div>
+                            <div class="guardrail-item"><span class="icon">&#9201;</span> Rate Limiter<p>Priority queue for LLM slots</p></div>
+                            <div class="guardrail-item"><span class="icon">&#128178;</span> Cost Circuit Breaker<p>Monthly budget hard stop</p></div>
+                            <div class="guardrail-item"><span class="icon">&#128204;</span> Model Pinning<p>Version recorded for reproducibility</p></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="guardrail-demo" id="guardrail-demo">
+                    <h3>Live Guardrail Demo</h3>
+                    <p>The UNCERTAIN_RETRY case demonstrates guardrail override: Decision Engine recommends AUTO_RETRY with LOW confidence, but the confidence floor guardrail blocks it and overrides to ESCALATE.</p>
+                    <div class="guardrail-flow">
+                        <div class="gf-step gf-decision">Decision: AUTO_RETRY<br><small>confidence: LOW, risk: MEDIUM</small></div>
+                        <div class="gf-arrow">&#8594;</div>
+                        <div class="gf-step gf-check gf-fail">Confidence Floor Check<br><small>LOW &lt; MEDIUM threshold</small><br><span class="fail-badge">BLOCKED</span></div>
+                        <div class="gf-arrow">&#8594;</div>
+                        <div class="gf-step gf-override">Override: ESCALATE_OPS<br><small>Safe fallback applied</small></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
