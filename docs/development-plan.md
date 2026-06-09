@@ -211,16 +211,104 @@
 
 | Layer | Technology | Justification |
 |-------|-----------|---------------|
-| Language | Python 3.12+ | Rich ecosystem for AI/agents, fast prototyping |
-| Framework | FastAPI | Async, typed, auto-docs |
+| Language | Python 3.12+ | Rich ecosystem for AI/agents, async-native, fast prototyping |
+| Framework | FastAPI | Async, typed, auto-docs, excellent for agent APIs |
 | Workflow | Temporal (or custom state machine) | Durable execution, visibility, retry built-in |
 | Message Bus | Redis Streams (dev) / Kafka (prod) | Simplicity for prototype, scalability for prod |
 | Database | PostgreSQL 16 | ACID, JSONB, partitioning for audit |
-| Cache | Redis | Idempotency keys, distributed locks |
-| Observability | OpenTelemetry + Prometheus + Grafana | Standard stack |
+| Cache | Redis | Idempotency keys, distributed locks, semaphores |
+| LLM SDK | LiteLLM (unified interface) | Multi-provider abstraction, failover, cost tracking |
+| LLM Primary | OpenAI GPT-4o (decision) / GPT-4o-mini (routing) | Best structured output adherence, lowest hallucination rate |
+| LLM Fallback | Anthropic Claude 3.5 Sonnet / Haiku | Failover provider, strong reasoning, different failure modes |
+| Guardrails | Pydantic + custom validators | Schema enforcement on all LLM outputs |
+| Observability | OpenTelemetry + Prometheus + Grafana | Standard stack, LLM call tracing included |
 | Testing | pytest + hypothesis | Property-based testing for decision rules |
 | Containers | Docker + Docker Compose | Local dev parity |
 | CI/CD | GitHub Actions | Automated testing and linting |
+
+---
+
+## LLM Integration Plan
+
+### Phase 1: No LLM — Pure Rule Engine
+All decisions made by deterministic rules. This establishes the baseline:
+- Measurable decision accuracy on test cases
+- Latency baseline without LLM overhead
+- Identifies which cases the rule engine cannot handle (these become LLM candidates)
+
+### Phase 2: LLM as Advisor (Shadow Mode)
+LLM runs in parallel with rule engine but its output is NOT used:
+- Compare LLM recommendation vs. rule engine recommendation
+- Measure agreement rate (should be >90% on simple cases)
+- Identify cases where LLM adds value (complex evidence synthesis)
+- Establish LLM latency and cost baselines
+
+### Phase 3: LLM with Guardrails (Active)
+LLM decisions are used for cases the rule engine cannot handle:
+- Rule engine handles simple, clear-cut cases (80% of volume)
+- LLM handles complex, multi-evidence cases (20% of volume)
+- All LLM decisions pass through guardrail pipeline before execution
+- Human review required for LLM decisions on high-value transactions
+
+### Phase 4: LLM Optimization
+- Fine-tune prompts based on Phase 3 decision outcomes
+- Identify cases where LLM consistently outperforms rules → graduate to auto-resolve
+- Identify cases where LLM consistently fails → add specific rules, remove from LLM path
+- Cost optimization: can cheaper model handle specific case types?
+
+---
+
+## Guardrail Implementation Plan
+
+### Sprint 1-2: Foundation Guardrails
+- [ ] PII masking utility (mask before LLM, unmask for execution)
+- [ ] Structured output validator (JSON Schema enforcement on LLM responses)
+- [ ] Action allowlist validator (reject any action not in enum)
+- [ ] Token budget enforcer (hard cap on input/output tokens per call)
+- [ ] LLM call logger (request/response with masked PII for audit)
+
+### Sprint 2-3: Safety Guardrails
+- [ ] Confidence floor enforcement (low confidence → auto-escalate)
+- [ ] Contradiction detector (LLM vs. rule engine disagreement → escalate)
+- [ ] Hallucination detector (check if LLM references non-existent evidence IDs)
+- [ ] Amount threshold gate (high-value → require human approval)
+- [ ] Retry budget tracker (max N LLM calls per case)
+
+### Sprint 3-4: Operational Guardrails
+- [ ] LLM provider failover (OpenAI → Anthropic → rule-only degradation)
+- [ ] Rate limiter with priority queue (critical cases get LLM slots first)
+- [ ] Cost circuit breaker (monthly budget enforcement)
+- [ ] Model version pinning for reproducibility
+- [ ] A/B testing framework (compare model versions on live traffic)
+
+---
+
+## Concurrency Implementation Plan
+
+### Sprint 1: Single-Threaded Foundation
+- [ ] Synchronous processing: one case at a time
+- [ ] Establish correctness before optimizing for throughput
+- [ ] All state transitions are atomic and validated
+
+### Sprint 2: Async I/O for Investigators
+- [ ] Convert investigators to async (asyncio.gather for parallel fan-out)
+- [ ] Add per-investigator timeouts (asyncio.wait_for)
+- [ ] Implement evidence bundle aggregator (fan-in after fan-out)
+- [ ] Test: verify parallel investigation does not corrupt shared state
+
+### Sprint 3: Multi-Case Parallelism
+- [ ] Kafka consumer with multiple partitions
+- [ ] Worker pool processing cases in parallel
+- [ ] Optimistic locking on case state updates
+- [ ] Distributed lock (Redis) for idempotent execution
+- [ ] Backpressure: if workers are saturated, stop consuming (Kafka consumer pause)
+
+### Sprint 4: LLM Concurrency Controls
+- [ ] Semaphore for max concurrent LLM calls (configurable, default 20)
+- [ ] Token bucket rate limiter per provider
+- [ ] Priority queue for LLM slots (CRITICAL cases first)
+- [ ] Graceful degradation: overflow cases use rule-only path
+- [ ] Monitor: LLM queue depth, wait time, degradation frequency
 
 ---
 
@@ -230,21 +318,62 @@
 **Decision**: Start with custom state machine for Phase 1-2, migrate to Temporal for Phase 3-4.
 **Rationale**: Reduces initial complexity; Temporal adds significant value for retry, timeout, and visibility but has learning curve.
 
-### D2: Rule-Based vs. ML-Based Decision Engine
-**Decision**: Rule-based with configurable thresholds.
-**Rationale**: Auditable, deterministic, explainable. ML can be added as a scoring layer later, not as primary decision-maker.
+### D2: Rule-Based vs. LLM-Based Decision Engine
+**Decision**: Hybrid — rule engine as primary, LLM as advisor for complex cases.
+**Rationale**: Rules are auditable, deterministic, explainable. LLM handles edge cases and generates justifications. LLM never acts without guardrail validation. This gives us the best of both worlds: speed and safety for common cases, intelligence for rare ones.
 
-### D3: Sync vs. Async Agent Communication
+### D3: Why GPT-4o / Claude Sonnet for Decision Engine
+**Decision**: Use frontier models (not fine-tuned smaller models) for decision reasoning.
+**Rationale**:
+- Payment decisions require multi-step logical reasoning (evidence A contradicts evidence B → what does this imply?)
+- Frontier models have lowest hallucination rate on structured reasoning tasks
+- Cost per decision is ~$0.01-0.03 — negligible vs. cost of a wrong payment action
+- Fine-tuned smaller models lack the generalization needed for novel exception types
+- Temperature 0 + structured output mode gives sufficient determinism
+
+### D4: Why GPT-4o-mini / Haiku for Orchestration
+**Decision**: Use fast/cheap models for routing and summarization tasks.
+**Rationale**:
+- Orchestrator decisions are simple: "which investigators to activate" (choosing from a list)
+- Latency matters more than reasoning depth here (orchestrator is on the critical path)
+- 10-20x cheaper per token, P95 latency < 300ms vs. ~2s for frontier models
+- If routing is wrong, investigators return INCONCLUSIVE — self-correcting
+
+### D5: Why No LLM for Investigators
+**Decision**: Investigators are pure deterministic code — no LLM.
+**Rationale**:
+- Investigators RETRIEVE facts. Facts are not generated, they're looked up.
+- Adding LLM introduces hallucination risk at the evidence layer (catastrophic — bad evidence → bad decisions)
+- API calls have predictable latency (50-200ms). LLM adds 500ms-2000ms.
+- If an API is down, the truthful answer is "INCONCLUSIVE", never an LLM-generated guess
+
+### D6: Sync vs. Async Agent Communication
 **Decision**: Async message-passing for all inter-agent communication.
 **Rationale**: Decoupling, failure isolation, natural retry semantics, audit trail.
 
-### D4: Single Process vs. Distributed Agents
+### D7: Single Process vs. Distributed Agents
 **Decision**: Single-process in development, distributed in production.
 **Rationale**: Faster iteration; agent boundaries are logical (modules), not physical (services) until scaling demands it.
 
-### D5: Real External Integrations vs. Stubs
+### D8: Real External Integrations vs. Stubs
 **Decision**: All external systems stubbed/mocked with realistic behavior.
 **Rationale**: Problem statement explicitly excludes production integrations to real rails.
+
+### D9: Multi-Provider LLM Strategy
+**Decision**: Primary (OpenAI) + Fallback (Anthropic) + Degradation (rule-only).
+**Rationale**:
+- No single LLM provider has 100% uptime
+- Different providers have different failure modes (useful for redundancy)
+- Rule-only degradation means system NEVER stops — just loses LLM intelligence temporarily
+- Cost arbitrage: can route low-priority cases to cheaper provider
+
+### D10: Concurrency by Payment ID Partitioning
+**Decision**: Kafka partitioned by payment_id ensures all events for same payment hit same worker.
+**Rationale**:
+- Eliminates need for distributed locks on most operations
+- Duplicate detection is guaranteed coherent (no split-brain)
+- Different payments are fully independent — scales horizontally
+- Trade-off: hot partitions if one payment generates many events (rare, handled by per-partition rate limiting)
 
 ---
 
@@ -252,11 +381,18 @@
 
 | Risk | Impact | Mitigation |
 |------|--------|-----------|
+| LLM hallucinates an invalid action | Incorrect payment operation | Action allowlist guardrail + schema validation |
+| LLM provider outage during peak | Cases pile up without decisions | Multi-provider failover + rule-only degradation path |
+| LLM produces non-deterministic decisions | Audit replay fails | Temperature 0 + model version pinning + evidence snapshotting |
 | Decision engine produces incorrect action | Duplicate payment / lost funds | Confidence thresholds + human approval for risky actions |
 | Agent timeout cascade | Cases stuck indefinitely | SLA timers + automatic escalation on timeout |
 | Duplicate event processing | Double-counting exceptions | Idempotency at ingress + egress |
 | State corruption from concurrent updates | Inconsistent case state | Optimistic locking + state machine validation |
 | Configuration error deploys bad rules | Widespread incorrect decisions | Config validation + gradual rollout + kill switch |
+| LLM cost explosion | Budget overrun | Per-case cost cap + monthly budget circuit breaker |
+| Prompt injection via error messages | Agent hijacking | Sanitize all external text before prompt inclusion |
+| Investigation stampede after restart | System overload | Gradual drain startup (10% → 100% over 60s) |
+| Kafka partition hotspot | One worker overwhelmed | Monitor partition lag; rebalance if needed |
 
 ---
 
@@ -268,6 +404,10 @@
 4. **Auditability**: Every decision traceable with evidence and justification
 5. **Determinism**: Replay any case with same evidence → same decision
 6. **Resilience**: System degrades gracefully (escalates to human) on any component failure
+7. **LLM Safety**: Zero hallucinated actions pass guardrails in testing
+8. **Concurrency**: System handles 100+ concurrent cases without race conditions
+9. **Cost Control**: Average LLM cost per case < $0.05
+10. **Failover**: Seamless provider switch within 5s of primary failure detection
 
 ---
 
